@@ -23,6 +23,7 @@
     "@react-navigation/native": "^7.1.6",
     "@supabase/supabase-js": "^2.57.4",
     "@vis.gl/react-google-maps": "^1.5.5",
+    "axios": "^1.12.2",
     "expo": "~53.0.20",
     "expo-blur": "~14.1.5",
     "expo-constants": "~17.1.7",

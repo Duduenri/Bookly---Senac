@@ -1,3 +1,5 @@
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+
 // Configuração da API
 const API_BASE_URL = 'http://localhost:3000'; // URL da API local
 
@@ -18,30 +20,40 @@ export interface ApiBook {
 
 // Cliente da API
 class ApiClient {
-  private baseURL: string;
+  private readonly client: AxiosInstance;
 
   constructor(baseURL: string) {
-    this.baseURL = baseURL;
+    this.client = axios.create({
+      baseURL,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
-  private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
-    
+  private async request<T>(config: AxiosRequestConfig): Promise<T> {
     try {
-      const response = await fetch(url, {
+      const response = await this.client.request<T>({
+        ...config,
         headers: {
           'Content-Type': 'application/json',
-          ...options?.headers,
+          ...(config.headers ?? {}),
         },
-        ...options,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status ?? 'desconhecido';
+        const statusText = error.response?.statusText ?? '';
+        const responseData = error.response?.data as { message?: string } | undefined;
+
+        console.error(`API request failed: ${status} ${statusText}`.trim(), responseData ?? error);
+
+        const message = responseData?.message ?? `HTTP error! status: ${status}`;
+        throw new Error(message);
       }
 
-      return await response.json();
-    } catch (error) {
       console.error('API request failed:', error);
       throw error;
     }
@@ -49,37 +61,45 @@ class ApiClient {
 
   // Buscar todos os livros disponíveis
   async getBooks(): Promise<ApiBook[]> {
-    return this.request<ApiBook[]>('/api/books');
+    return this.request<ApiBook[]>({ url: '/api/books' });
   }
 
   // Buscar livros por categoria
   async getBooksByCategory(categoryId: string): Promise<ApiBook[]> {
-    return this.request<ApiBook[]>(`/api/books?category=${categoryId}`);
+    return this.request<ApiBook[]>({
+      url: '/api/books',
+      params: { category: categoryId },
+    });
   }
 
   // Buscar livros por busca
   async searchBooks(query: string): Promise<ApiBook[]> {
-    return this.request<ApiBook[]>(`/api/books/search?q=${encodeURIComponent(query)}`);
+    return this.request<ApiBook[]>({
+      url: '/api/books/search',
+      params: { q: query },
+    });
   }
 
   // Buscar livro por ID
   async getBookById(id: string): Promise<ApiBook> {
-    return this.request<ApiBook>(`/api/books/${id}`);
+    return this.request<ApiBook>({ url: `/api/books/${id}` });
   }
 
   // Adicionar livro aos favoritos
   async addToFavorites(bookId: string, userId: string): Promise<void> {
-    return this.request<void>('/api/favorites', {
+    return this.request<void>({
+      url: '/api/favorites',
       method: 'POST',
-      body: JSON.stringify({ bookId, userId }),
+      data: { bookId, userId },
     });
   }
 
   // Adicionar livro à wishlist
   async addToWishlist(bookId: string, userId: string): Promise<void> {
-    return this.request<void>('/api/wishlist', {
+    return this.request<void>({
+      url: '/api/wishlist',
       method: 'POST',
-      body: JSON.stringify({ bookId, userId }),
+      data: { bookId, userId },
     });
   }
 }

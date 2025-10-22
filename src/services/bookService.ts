@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { supabase } from './supabase';
 
 // Serviço para gerenciar livros usando Supabase
@@ -215,9 +216,8 @@ class BookService {
   // Upload de imagem para Supabase Storage
   async uploadImage(imageUri: string, fileName: string): Promise<{ url: string }> {
     try {
-      // Converter URI para blob
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
+      // Converter URI para blob usando axios
+      const { data: blob } = await axios.get<Blob>(imageUri, { responseType: 'blob' });
 
       // Upload para Supabase Storage
       const { data, error } = await supabase.storage
