@@ -5,17 +5,25 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Iniciando seed da base de dados...');
 
-  // Limpar dados existentes (opcional - descomente se quiser resetar)
-  // await prisma.friendship.deleteMany();
-  // await prisma.friendRequest.deleteMany();
-  // await prisma.wishlistItem.deleteMany();
-  // await prisma.favorite.deleteMany();
-  // await prisma.review.deleteMany();
-  // await prisma.listingImage.deleteMany();
-  // await prisma.listing.deleteMany();
-  // await prisma.book.deleteMany();
-  // await prisma.category.deleteMany();
-  // await prisma.profile.deleteMany();
+  // Suporte a reset completo com flag --reset
+  const reset = process.argv.includes('--reset');
+  if (reset) {
+    console.log('♻️  Reset solicitado: limpando tabelas em ordem segura...');
+    await prisma.friendship.deleteMany();
+    await prisma.friendRequest.deleteMany();
+    await prisma.wishlistItem.deleteMany();
+    await prisma.favorite.deleteMany();
+    await prisma.review.deleteMany();
+    await prisma.listingImage.deleteMany();
+    await prisma.listing.deleteMany();
+    await prisma.location.deleteMany();
+    await prisma.book.deleteMany();
+    await prisma.category.deleteMany();
+    await prisma.secondhandStore.deleteMany();
+    await prisma.bookstore.deleteMany();
+    await prisma.profile.deleteMany();
+    console.log('✅ Tabelas limpas.');
+  }
 
   // Criar categorias de livros
   console.log('📚 Criando categorias...');
@@ -99,6 +107,32 @@ async function main() {
 
   console.log(`✅ ${3} usuários criados`);
 
+  // Criar entidades dedicadas de livraria e sebo
+  console.log('🏪 Criando livrarias e sebos...');
+  const existingBookstore = await prisma.bookstore.findFirst({ where: { name: 'Livraria Santos' } });
+  const bookstore = existingBookstore ?? await prisma.bookstore.create({
+    data: {
+      name: 'Livraria Santos',
+      description: 'Livraria com foco em livros técnicos e acadêmicos',
+      email: 'contato@livrariasantos.com.br',
+      phone: '(11) 4002-8922',
+      website: 'https://livrariasantos.com.br',
+      logo: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=300&h=300&fit=crop'
+    }
+  });
+  const existingSebo = await prisma.secondhandStore.findFirst({ where: { name: 'Sebo Costa' } });
+  const sebo = existingSebo ?? await prisma.secondhandStore.create({
+    data: {
+      name: 'Sebo Costa',
+      description: 'Sebo especializado em livros raros e usados',
+      email: 'atendimento@sebocosta.com.br',
+      phone: '(11) 3003-1234',
+      website: 'https://sebocosta.com.br',
+      logo: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=300&h=300&fit=crop'
+    }
+  });
+  console.log('✅ 1 livraria e 1 sebo criados/confirmados');
+
   // Criar alguns livros de exemplo
   console.log('📖 Criando livros de exemplo...');
 
@@ -177,7 +211,8 @@ async function main() {
         zipCode: '01001-000',
         latitude: -23.5505,
         longitude: -46.6333,
-        notes: 'Livraria no centro da cidade'
+        notes: 'Livraria no centro da cidade',
+        bookstoreId: bookstore.id
       }
     }),
     prisma.location.create({
@@ -189,7 +224,8 @@ async function main() {
         zipCode: '05435-000',
         latitude: -23.5671,
         longitude: -46.6919,
-        notes: 'Sebo especializado em livros raros'
+        notes: 'Sebo especializado em livros raros',
+        secondhandStoreId: sebo.id
       }
     })
   ]);
@@ -222,7 +258,8 @@ async function main() {
         status: 'ACTIVE',
         profileId: maria.id,
         bookId: books.find(b => b.title.includes('Clean Code'))?.id || books[0].id,
-        locationId: locations[1].id
+        locationId: locations[1].id,
+        bookstoreId: bookstore.id
       }
     }),
 
@@ -235,12 +272,39 @@ async function main() {
         status: 'ACTIVE',
         profileId: pedro.id,
         bookId: books.find(b => b.title.includes('1984'))?.id || books[0].id,
-        locationId: locations[2].id
+        locationId: locations[2].id,
+        secondhandStoreId: sebo.id
       }
     })
   ]);
 
   console.log(`✅ ${listings.length} listagens criadas`);
+
+  // Imagens das listagens
+  console.log('🖼️ Adicionando imagens às listagens...');
+  await prisma.listingImage.createMany({
+    data: [
+      {
+        listingId: listings[0].id,
+        url: 'https://images.unsplash.com/photo-1544937950-fa07a98d237f?w=800',
+        alt: 'O Senhor dos Anéis - capa',
+        order: 0
+      },
+      {
+        listingId: listings[1].id,
+        url: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=800',
+        alt: 'Clean Code - capa',
+        order: 0
+      },
+      {
+        listingId: listings[2].id,
+        url: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=800',
+        alt: '1984 - capa',
+        order: 0
+      }
+    ]
+  });
+  console.log('✅ Imagens adicionadas');
 
   // Criar algumas reviews de exemplo
   console.log('⭐ Criando reviews de exemplo...');
@@ -308,15 +372,54 @@ async function main() {
 
   console.log(`✅ ${favorites.length} favoritos criados`);
 
+   // Lista de desejos (wishlist)
+  console.log('📝 Criando itens de wishlist...');
+  const wishlistItems = await Promise.all([
+    prisma.wishlistItem.create({
+      data: {
+        profileId: joao.id,
+        title: 'Neuromancer',
+        author: 'William Gibson',
+        notes: 'Procurar edição da Aleph'
+      }
+    }),
+    prisma.wishlistItem.create({
+      data: {
+        profileId: maria.id,
+        bookId: books[1].id, // Clean Code
+        notes: 'Repor estoque'
+      }
+    })
+  ]);
+  console.log(`✅ ${wishlistItems.length} itens de wishlist criados`);
+
+  // Solicitações de amizade (friend requests)
+  console.log('📨 Criando solicitações de amizade...');
+  const friendRequests = await Promise.all([
+    prisma.friendRequest.create({
+      data: {
+        senderId: pedro.id,
+        receiverId: maria.id,
+        status: 'PENDING'
+      }
+    })
+  ]);
+  console.log(`✅ ${friendRequests.length} solicitações de amizade criadas`);
+
   console.log('🎉 Seed concluído com sucesso!');
   console.log('\n📊 Resumo dos dados criados:');
   console.log(`   • ${categories.length} categorias`);
   console.log(`   • ${3} usuários de teste`);
   console.log(`   • ${books.length} livros`);
+  console.log(`   • ${locations.length} localizações`);
+  console.log(`   • 1 livraria / 1 sebo`);
   console.log(`   • ${listings.length} listagens`);
+  console.log(`   • 3 imagens de listagens`);
   console.log(`   • ${reviews.length} reviews`);
   console.log(`   • ${friendships.length} amizades`);
   console.log(`   • ${favorites.length} favoritos`);
+  console.log(`   • ${wishlistItems.length} itens de wishlist`);
+  console.log(`   • ${friendRequests.length} solicitações de amizade`);
   
   console.log('\n👥 Usuários de teste criados:');
   console.log(`   • João Silva (${joao.email}) - Usuário comum`);
@@ -332,3 +435,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
