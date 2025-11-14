@@ -14,6 +14,7 @@ export interface HomeTemplateProps {
   onAvatarPress?: () => void;
   onTitlePress?: () => void;
   onAddBookPress?: () => void;
+  onFriendsPress?: () => void;
   stores?: Store[];
 }
 
@@ -25,6 +26,7 @@ export const HomeTemplate: React.FC<HomeTemplateProps> = ({
   onAvatarPress,
   onTitlePress,
   onAddBookPress,
+  onFriendsPress,
   stores = [],
 }) => {
   return (
@@ -58,6 +60,16 @@ export const HomeTemplate: React.FC<HomeTemplateProps> = ({
             >
               <Ionicons name="add" size={16} color="#fff" />
               <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>Livro</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={onFriendsPress} disabled={!onFriendsPress}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 16,
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '600' }}>Amigos</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={onTitlePress} disabled={!onTitlePress}>
               <Text style={{ color: '#fff', fontWeight: '600' }}>Home</Text>

@@ -123,6 +123,10 @@ export default function HomeScreen() {
     router.push('/(private)/add-book');
   }, [router]);
 
+  const handleFriendsPress = useCallback(() => {
+    router.push('/(private)/friends');
+  }, [router]);
+
   // Mostrar loading ou erro
   if (loading) {
     return (
@@ -135,6 +139,7 @@ export default function HomeScreen() {
         onAvatarPress={handleAvatarPress}
         onTitlePress={handleTitlePress}
         onAddBookPress={handleAddBookPress}
+        onFriendsPress={handleFriendsPress}
       />
     );
   }
@@ -150,6 +155,7 @@ export default function HomeScreen() {
       onAvatarPress={handleAvatarPress}
       onTitlePress={handleTitlePress}
       onAddBookPress={handleAddBookPress}
+      onFriendsPress={handleFriendsPress}
     />
   );
 }
