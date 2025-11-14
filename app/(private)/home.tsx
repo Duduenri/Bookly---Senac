@@ -2,6 +2,7 @@ import { Book } from '@/components/Genericos/BookList';
 import { HomeTemplate } from '@/components/Genericos/HomeTemplate';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useApi } from '@/src/services/api';
+import { getBooksFromSupabase } from '@/src/services/books';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
@@ -9,10 +10,17 @@ import { Alert } from 'react-native';
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { getBooks, addToFavorites, addToWishlist } = useApi();
+  const { addToFavorites, addToWishlist } = useApi();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Exibir alerta de erro (não condicional ao retorno)
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Erro', error);
+    }
+  }, [error]);
 
   // Mock de sebos/livrarias com lat/long (substitua por dados reais depois)
   const stores = [
@@ -39,60 +47,31 @@ export default function HomeScreen() {
     },
   ];
 
-  // Buscar livros do Supabase
+  // Buscar livros diretamente do Supabase (sem loop de render)
   useEffect(() => {
+    let isMounted = true;
     const fetchBooks = async () => {
       try {
         setLoading(true);
         setError(null);
-        
         console.log('🔍 Buscando livros do Supabase...');
-        const booksData = await getBooks();
-        
+        const booksData = await getBooksFromSupabase();
+        if (!isMounted) return;
         console.log(`✅ ${booksData.length} livros encontrados`);
-        setBooks(booksData);
-        
+        setBooks(booksData as Book[]);
       } catch (err) {
         console.error('❌ Erro ao buscar livros:', err);
+        if (!isMounted) return;
         setError('Erro ao carregar os livros. Tente novamente.');
-        
-        // Fallback: usar dados de exemplo se a API falhar
-        const fallbackBooks: Book[] = [
-          {
-            id: '1',
-            title: 'O Senhor dos Anéis',
-            author: 'J.R.R. Tolkien',
-            description: 'Uma épica jornada pela Terra-média, onde um hobbit deve destruir um anel poderoso.',
-            coverImage: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop',
-            price: 45.90,
-            condition: 'GOOD',
-            transactionType: 'SALE',
-            location: 'São Paulo, SP',
-            sellerName: 'João Silva',
-            sellerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face'
-          },
-          {
-            id: '2',
-            title: '1984',
-            author: 'George Orwell',
-            description: 'Uma distopia que retrata uma sociedade totalitária e vigilante.',
-            coverImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=200&h=300&fit=crop',
-            price: 32.50,
-            condition: 'LIKE_NEW',
-            transactionType: 'EXCHANGE',
-            location: 'Rio de Janeiro, RJ',
-            sellerName: 'Maria Santos',
-            sellerAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=50&h=50&fit=crop&crop=face'
-          }
-        ];
-        setBooks(fallbackBooks);
+        setBooks([]);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchBooks();
-  }, [getBooks]);
+    return () => { isMounted = false; };
+  }, []);
 
   const handleBookPress = useCallback((book: Book) => {
     Alert.alert(
@@ -160,9 +139,6 @@ export default function HomeScreen() {
     );
   }
 
-  if (error) {
-    Alert.alert('Erro', error);
-  }
 
   return (
     <HomeTemplate

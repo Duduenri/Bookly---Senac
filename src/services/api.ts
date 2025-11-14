@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 // Configuração da API
-const API_BASE_URL = 'http://localhost:3000'; // URL da API local
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://127.0.0.1:3000'; // URL da API (pode ser definida via env)
 
 // Tipos da API
 export interface ApiBook {
