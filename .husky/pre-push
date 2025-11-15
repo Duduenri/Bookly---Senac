@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Running pre-push checks..."
+
+# Lint + typecheck (rápidos)
+npm run lint || exit 1
+npx tsc --noEmit || exit 1
+
+# Build (falha o push se quebrar)
+npm run build || exit 1

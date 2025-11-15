@@ -10,7 +10,8 @@
     "reset-project": "node ./scripts/reset-project.js",
     "android": "npx expo start --android",
     "ios": "npx expo start --ios",
-    "web": "npx expo start --web"
+    "web": "npx expo start --web",
+    "prepare": "husky"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.24.2",
@@ -58,6 +59,7 @@
     "@types/react": "~19.0.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
+    "husky": "^9.1.7",
     "typescript": "~5.8.3"
   },
   "private": true
