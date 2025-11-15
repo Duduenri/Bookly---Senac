@@ -11,7 +11,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 
 function RootLayoutNav() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
@@ -26,7 +26,7 @@ function RootLayoutNav() {
   }, []);
 
   useEffect(() => {
-    if (!isReady || loading) return; // Não navegar até estar pronto ou enquanto carrega sessão
+    if (!isReady) return; // Não navegar até estar pronto
 
     const inAuthGroup = segments[0] === '(private)';
     
@@ -37,7 +37,7 @@ function RootLayoutNav() {
       // Se não está autenticado mas está na área privada, redirecionar para login
       router.replace('/(public)/login');
     }
-  }, [isAuthenticated, segments, isReady, router, loading]);
+  }, [isAuthenticated, segments, isReady, router]);
 
   return (
     <Stack>

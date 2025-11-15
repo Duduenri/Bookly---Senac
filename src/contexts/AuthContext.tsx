@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const session = data.session;
       if (session?.user) {
         const u = session.user;
-        setUser({ id: u.id, email: u.email, name: u.user_metadata?.name ?? null, avatar: u.user_metadata?.avatar ?? null });
+        setUser({ id: u.id, email: u.email ?? null, name: u.user_metadata?.name ?? null, avatar: u.user_metadata?.avatar ?? null });
       }
     };
 
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: listener } = supabase.auth.onAuthStateChange((event: any, session: any) => {
       if (session?.user) {
         const u = session.user;
-        setUser({ id: u.id, email: u.email, name: u.user_metadata?.name ?? null, avatar: u.user_metadata?.avatar ?? null });
+        setUser({ id: u.id, email: u.email ?? null, name: u.user_metadata?.name ?? null, avatar: u.user_metadata?.avatar ?? null });
       } else {
         setUser(null);
       }
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
     if (data.user) {
-      setUser({ id: data.user.id, email: data.user.email, name: data.user.user_metadata?.name ?? null, avatar: data.user.user_metadata?.avatar ?? null });
+      setUser({ id: data.user.id, email: data.user.email ?? null, name: data.user.user_metadata?.name ?? null, avatar: data.user.user_metadata?.avatar ?? null });
     }
   };
 
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     // user might be nil until email confirmation depending on Supabase settings
     if (data.user) {
-      setUser({ id: data.user.id, email: data.user.email, name: data.user.user_metadata?.name ?? name ?? null, avatar: data.user.user_metadata?.avatar ?? null });
+      setUser({ id: data.user.id, email: data.user.email ?? null, name: data.user.user_metadata?.name ?? name ?? null, avatar: data.user.user_metadata?.avatar ?? null });
     }
   };
 

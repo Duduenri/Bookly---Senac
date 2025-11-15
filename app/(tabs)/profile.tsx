@@ -169,9 +169,9 @@ export default function ProfileScreen() {
       {/* Header no mesmo estilo da Home */}
       <Header
         avatarName={profile?.name || user?.name || 'Usuário'}
-        avatarSrc={profile?.avatar || user?.avatar}
+        avatarSrc={profile?.avatar ?? user?.avatar ?? undefined}
         title="Meu Perfil"
-        subtitle={user?.email}
+        subtitle={user?.email ?? undefined}
         avatarSize="md"
         avatarColorPalette="blue"
         showBorder={true}
