@@ -52,3 +52,20 @@ export async function sendFriendRequest(senderProfileId: string, receiverProfile
   });
   if (error) throw error;
 }
+
+// Cria um profile mínimo para um usuário autenticado do Supabase
+export async function createProfileForUser(params: { userId: string; email: string; name?: string; avatar?: string | null; }): Promise<Profile> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert({
+      userId: params.userId,
+      email: params.email,
+      name: params.name ?? params.email.split('@')[0],
+      avatar: params.avatar ?? null,
+      accountType: 'USER',
+    })
+    .select('id, userId, email, name, avatar')
+    .single();
+  if (error) throw error;
+  return data as Profile;
+}

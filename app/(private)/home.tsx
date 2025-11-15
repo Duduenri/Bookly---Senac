@@ -5,7 +5,7 @@ import { useApi } from '@/src/services/api';
 import { getBooksFromSupabase } from '@/src/services/books';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -14,15 +14,14 @@ export default function HomeScreen() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
 
-  // Exibir alerta de erro (não condicional ao retorno)
   useEffect(() => {
     if (error) {
       Alert.alert('Erro', error);
     }
   }, [error]);
 
-  // Mock de sebos/livrarias com lat/long (substitua por dados reais depois)
   const stores = [
     {
       id: 's1',
@@ -47,20 +46,16 @@ export default function HomeScreen() {
     },
   ];
 
-  // Buscar livros diretamente do Supabase (sem loop de render)
   useEffect(() => {
     let isMounted = true;
     const fetchBooks = async () => {
       try {
         setLoading(true);
         setError(null);
-        console.log('🔍 Buscando livros do Supabase...');
         const booksData = await getBooksFromSupabase();
         if (!isMounted) return;
-        console.log(`✅ ${booksData.length} livros encontrados`);
         setBooks(booksData as Book[]);
       } catch (err) {
-        console.error('❌ Erro ao buscar livros:', err);
         if (!isMounted) return;
         setError('Erro ao carregar os livros. Tente novamente.');
         setBooks([]);
@@ -74,12 +69,8 @@ export default function HomeScreen() {
   }, []);
 
   const handleBookPress = useCallback((book: Book) => {
-    Alert.alert(
-      'Livro Selecionado',
-      `Título: ${book.title}\nAutor: ${book.author}\nPreço: R$ ${book.price?.toFixed(2) || 'Não informado'}\nLocalização: ${book.location}`,
-      [{ text: 'OK' }]
-    );
-  }, []);
+    router.push({ pathname: '/(private)/review/[bookId]', params: { bookId: book.id } });
+  }, [router]);
 
   const handleFavoritePress = useCallback(async (book: Book) => {
     try {
@@ -91,7 +82,6 @@ export default function HomeScreen() {
       await addToFavorites(book.id, user.id);
       Alert.alert('Favorito', `"${book.title}" adicionado aos favoritos! ❤️`);
     } catch (error) {
-      console.error('Erro ao adicionar favorito:', error);
       Alert.alert('Erro', 'Não foi possível adicionar aos favoritos. Tente novamente.');
     }
   }, [user?.id, addToFavorites]);
@@ -106,7 +96,6 @@ export default function HomeScreen() {
       await addToWishlist(book.id, user.id);
       Alert.alert('Lista de Desejos', `"${book.title}" adicionado à lista de desejos! 📝`);
     } catch (error) {
-      console.error('Erro ao adicionar à wishlist:', error);
       Alert.alert('Erro', 'Não foi possível adicionar à lista de desejos. Tente novamente.');
     }
   }, [user?.id, addToWishlist]);
@@ -127,11 +116,79 @@ export default function HomeScreen() {
     router.push('/(private)/friends');
   }, [router]);
 
-  // Mostrar loading ou erro
+  const handleReviewPress = useCallback(() => {
+    setReviewModalOpen(true);
+  }, []);
+
+  const closeReviewModal = useCallback(() => setReviewModalOpen(false), []);
+
+  const handleSelectBookToReview = useCallback((book: Book) => {
+    setReviewModalOpen(false);
+    router.push({ pathname: '/(private)/review/[bookId]', params: { bookId: book.id } });
+  }, [router]);
+
   if (loading) {
     return (
+      <>
+        <HomeTemplate
+          books={[]}
+          stores={stores}
+          onBookPress={handleBookPress}
+          onFavoritePress={handleFavoritePress}
+          onWishlistPress={handleWishlistPress}
+          onAvatarPress={handleAvatarPress}
+          onTitlePress={handleTitlePress}
+          onAddBookPress={handleAddBookPress}
+          onFriendsPress={handleFriendsPress}
+          onReviewPress={handleReviewPress}
+        />
+        <Modal
+          visible={reviewModalOpen}
+          animationType="slide"
+          transparent
+          onRequestClose={closeReviewModal}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Escolha um livro para avaliar</Text>
+                <Pressable onPress={closeReviewModal} hitSlop={10}>
+                  <Text style={styles.closeBtn}>✕</Text>
+                </Pressable>
+              </View>
+              {books.length === 0 ? (
+                <Text style={styles.emptyModal}>Nenhum livro disponível.</Text>
+              ) : (
+                <FlatList
+                  data={books}
+                  keyExtractor={(b) => b.id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity style={styles.bookRow} onPress={() => handleSelectBookToReview(item)}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.bookRowTitle} numberOfLines={1}>{item.title}</Text>
+                        <Text style={styles.bookRowSub} numberOfLines={1}>{item.author}</Text>
+                      </View>
+                      <Text style={styles.bookRowAction}>Avaliar →</Text>
+                    </TouchableOpacity>
+                  )}
+                  ItemSeparatorComponent={() => <View style={styles.separator} />}
+                  contentContainerStyle={{ paddingVertical: 8 }}
+                />
+              )}
+              <TouchableOpacity style={styles.modalFooterBtn} onPress={closeReviewModal}>
+                <Text style={styles.modalFooterText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </>
+    );
+  }
+
+  return (
+    <>
       <HomeTemplate
-        books={[]}
+        books={books}
         stores={stores}
         onBookPress={handleBookPress}
         onFavoritePress={handleFavoritePress}
@@ -140,22 +197,89 @@ export default function HomeScreen() {
         onTitlePress={handleTitlePress}
         onAddBookPress={handleAddBookPress}
         onFriendsPress={handleFriendsPress}
+        onReviewPress={handleReviewPress}
       />
-    );
-  }
-
-
-  return (
-    <HomeTemplate
-      books={books}
-      stores={stores}
-      onBookPress={handleBookPress}
-      onFavoritePress={handleFavoritePress}
-      onWishlistPress={handleWishlistPress}
-      onAvatarPress={handleAvatarPress}
-      onTitlePress={handleTitlePress}
-      onAddBookPress={handleAddBookPress}
-      onFriendsPress={handleFriendsPress}
-    />
+      <Modal
+        visible={reviewModalOpen}
+        animationType="slide"
+        transparent
+        onRequestClose={closeReviewModal}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Escolha um livro para avaliar</Text>
+              <Pressable onPress={closeReviewModal} hitSlop={10}>
+                <Text style={styles.closeBtn}>✕</Text>
+              </Pressable>
+            </View>
+            {books.length === 0 ? (
+              <Text style={styles.emptyModal}>Nenhum livro disponível.</Text>
+            ) : (
+              <FlatList
+                data={books}
+                keyExtractor={(b) => b.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.bookRow} onPress={() => handleSelectBookToReview(item)}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.bookRowTitle} numberOfLines={1}>{item.title}</Text>
+                      <Text style={styles.bookRowSub} numberOfLines={1}>{item.author}</Text>
+                    </View>
+                    <Text style={styles.bookRowAction}>Avaliar →</Text>
+                  </TouchableOpacity>
+                )}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                contentContainerStyle={{ paddingVertical: 8 }}
+              />
+            )}
+            <TouchableOpacity style={styles.modalFooterBtn} onPress={closeReviewModal}>
+              <Text style={styles.modalFooterText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+    maxHeight: '70%'
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  modalTitle: { fontWeight: '700', fontSize: 16, color: '#2D3748' },
+  closeBtn: { fontSize: 18, color: '#4A5568' },
+  emptyModal: { paddingVertical: 12, color: '#718096' },
+  bookRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 10,
+  },
+  bookRowTitle: { fontWeight: '600', color: '#2D3748' },
+  bookRowSub: { fontSize: 12, color: '#718096', marginTop: 2 },
+  bookRowAction: { color: '#3182CE', fontWeight: '600', marginLeft: 12 },
+  separator: { height: 1, backgroundColor: '#EDF2F7' },
+  modalFooterBtn: {
+    marginTop: 8,
+    backgroundColor: '#2B6CB0',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalFooterText: { color: '#fff', fontWeight: '700' },
+});
