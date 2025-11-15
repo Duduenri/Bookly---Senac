@@ -3,6 +3,7 @@ import { HomeTemplate } from '@/components/Genericos/HomeTemplate';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useApi } from '@/src/services/api';
 import { getBooksFromSupabase } from '@/src/services/books';
+import { listLatestReviews, type LatestReviewItem } from '@/src/services/reviews';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -15,6 +16,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [latestReviews, setLatestReviews] = useState<LatestReviewItem[]>([]);
 
   useEffect(() => {
     if (error) {
@@ -66,6 +68,15 @@ export default function HomeScreen() {
 
     fetchBooks();
     return () => { isMounted = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const data = await listLatestReviews(5);
+      if (active) setLatestReviews(data);
+    })();
+    return () => { active = false; };
   }, []);
 
   const handleBookPress = useCallback((book: Book) => {
@@ -198,6 +209,7 @@ export default function HomeScreen() {
         onAddBookPress={handleAddBookPress}
         onFriendsPress={handleFriendsPress}
         onReviewPress={handleReviewPress}
+        latestReviews={latestReviews}
       />
       <Modal
         visible={reviewModalOpen}

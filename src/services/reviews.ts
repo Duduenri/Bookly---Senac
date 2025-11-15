@@ -104,3 +104,42 @@ export async function getProfilesByIds(ids: string[]): Promise<Record<string, Pr
   }
   return map;
 }
+
+export interface LatestReviewItem extends ReviewItem {
+  book?: { id: string; title: string; author: string } | null;
+}
+
+export async function listLatestReviews(limit = 5): Promise<LatestReviewItem[]> {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('id, rating, comment, createdAt, profileId, bookId')
+    .order('createdAt', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const rows = (data ?? []) as any[];
+  const profileIds = Array.from(new Set(rows.map(r => r.profileId).filter(Boolean)));
+  const profilesMap = await getProfilesByIds(profileIds);
+
+  // buscar livros
+  const bookIds = Array.from(new Set(rows.map(r => r.bookId).filter(Boolean)));
+  let booksMap: Record<string, { id: string; title: string; author: string }> = {};
+  if (bookIds.length) {
+    const { data: books } = await supabase
+      .from('books')
+      .select('id, title, author')
+      .in('id', bookIds);
+    for (const b of books ?? []) {
+      booksMap[b.id] = b as any;
+    }
+  }
+
+  return rows.map(r => ({
+    id: r.id,
+    rating: r.rating,
+    comment: r.comment,
+    createdAt: r.createdAt,
+    profileId: r.profileId,
+    profile: profilesMap[r.profileId] ? { ...profilesMap[r.profileId] } : null,
+    book: booksMap[r.bookId] ?? null,
+  }));
+}

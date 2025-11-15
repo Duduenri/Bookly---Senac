@@ -17,6 +17,14 @@ export interface HomeTemplateProps {
   onFriendsPress?: () => void;
   onReviewPress?: () => void;
   stores?: Store[];
+  latestReviews?: Array<{
+    id: string;
+    rating: number;
+    comment?: string | null;
+    createdAt: string;
+    profile?: { name: string; avatar?: string | null } | null;
+    book?: { title: string; author: string } | null;
+  }>;
 }
 
 export const HomeTemplate: React.FC<HomeTemplateProps> = ({
@@ -30,6 +38,7 @@ export const HomeTemplate: React.FC<HomeTemplateProps> = ({
   onFriendsPress,
   onReviewPress,
   stores = [],
+  latestReviews = [],
 }) => {
   return (
     <SafeAreaView style={styles.container}>
@@ -101,6 +110,33 @@ export const HomeTemplate: React.FC<HomeTemplateProps> = ({
         </View>
       )}
 
+      {/* Últimas avaliações */}
+      {latestReviews.length > 0 && (
+        <View style={styles.latestSection}>
+          <Text style={styles.latestTitle}>Últimas avaliações</Text>
+          <View style={{ gap: 10 }}>
+            {latestReviews.map((rev) => (
+              <View key={rev.id} style={styles.reviewItem}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.reviewBook} numberOfLines={1}>
+                    {rev.book?.title ?? 'Livro'}
+                  </Text>
+                  <Text style={styles.reviewMeta} numberOfLines={1}>
+                    {rev.profile?.name ?? 'Usuário'} • {new Date(rev.createdAt).toLocaleDateString()}
+                  </Text>
+                  {rev.comment ? (
+                    <Text style={styles.reviewComment} numberOfLines={2}>{rev.comment}</Text>
+                  ) : null}
+                </View>
+                <Text style={styles.reviewStars}>
+                  {'★'.repeat(Math.max(1, Math.min(5, rev.rating)))}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
       {/* Seção de título */}
       <View style={styles.titleSection}>
         <Text style={styles.mainTitle}>Livros Disponíveis</Text>
@@ -150,6 +186,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: paletasCores.principal.solido,
   },
+  latestSection: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+    backgroundColor: paletasCores.cinza.texto,
+    borderBottomWidth: 1,
+    borderBottomColor: paletasCores.cinza.contorno,
+    gap: 8,
+  },
+  latestTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: paletasCores.principal.solido,
+  },
+  reviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  reviewBook: { fontWeight: '600', color: '#2D3748' },
+  reviewMeta: { color: '#718096', fontSize: 12 },
+  reviewComment: { color: '#4A5568', fontSize: 12 },
+  reviewStars: { color: '#E6B800', fontWeight: '700' },
   titleSection: {
     paddingHorizontal: 20,
     paddingVertical: 16,
