@@ -55,14 +55,28 @@ export async function sendFriendRequest(senderProfileId: string, receiverProfile
 
 // Cria um profile mínimo para um usuário autenticado do Supabase
 export async function createProfileForUser(params: { userId: string; email: string; name?: string; avatar?: string | null; }): Promise<Profile> {
+  // 1) Se já existe profile com este email, retorna ele
+  const existingByEmail = await supabase
+    .from('profiles')
+    .select('id, userId, email, name, avatar')
+    .eq('email', params.email)
+    .maybeSingle();
+  if (!existingByEmail.error && existingByEmail.data) {
+    return existingByEmail.data as Profile;
+  }
+
+  // 2) Caso contrário, cria novo profile vinculado ao userId do Auth
   const { data, error } = await supabase
     .from('profiles')
     .insert({
+      id: params.userId,
       userId: params.userId,
       email: params.email,
       name: params.name ?? params.email.split('@')[0],
       avatar: params.avatar ?? null,
       accountType: 'USER',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     })
     .select('id, userId, email, name, avatar')
     .single();

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { Alert, FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, ToastAndroid } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { listReviewsByBook, createBookReview, type ReviewItem } from '@/src/services/reviews';
 import { getMyProfile, createProfileForUser } from '@/src/services/friends';
@@ -82,18 +82,42 @@ export default function ReviewScreen() {
         Alert.alert('Erro', 'Faça login para enviar a avaliação.');
         return;
       }
-      await createBookReview({
+      const created = await createBookReview({
         profileId,
         bookId: String(bookId!),
         rating,
         comment: comment.trim() || undefined,
       });
+      const nowItem = created ? {
+        id: created.id,
+        rating,
+        comment: comment.trim() || undefined,
+        createdAt: created.createdAt,
+        profileId,
+        profile: myProfileId ? null : null,
+      } : null;
+      // tentar preencher profile localmente
+      const localProfile = myProfileId ? reviews.find(r => r.profileId === myProfileId)?.profile : undefined;
+      if (nowItem) {
+        (nowItem as any).profile = localProfile ?? (user ? { id: profileId, name: user.name ?? (user.email ?? 'Você'), avatar: user.avatar ?? null } : null);
+        setReviews((prev) => [nowItem as any, ...prev]);
+      }
       setComment('');
       setRating(5);
-      await refreshList();
-      Alert.alert('Obrigado!', 'Sua avaliação foi registrada.');
+      // atualizar em background
+      refreshList();
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Avaliação enviada com sucesso!', ToastAndroid.SHORT);
+      } else {
+        Alert.alert('Sucesso', 'Avaliação enviada com sucesso!');
+      }
     } catch (e: any) {
-      Alert.alert('Erro', e?.message ?? 'Não foi possível enviar sua avaliação.');
+      const msg = e?.message ?? 'Não foi possível enviar sua avaliação.';
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(`Erro: ${msg}`, ToastAndroid.LONG);
+      } else {
+        Alert.alert('Erro', msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -112,7 +136,6 @@ export default function ReviewScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -164,7 +187,6 @@ export default function ReviewScreen() {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
-    </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
