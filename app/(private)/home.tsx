@@ -152,6 +152,8 @@ export default function HomeScreen() {
           onAddBookPress={handleAddBookPress}
           onFriendsPress={handleFriendsPress}
           onReviewPress={handleReviewPress}
+          avatarName={user?.name ?? undefined}
+          avatarSrc={user?.avatar ?? undefined}
         />
         <Modal
           visible={reviewModalOpen}
@@ -210,6 +212,8 @@ export default function HomeScreen() {
         onFriendsPress={handleFriendsPress}
         onReviewPress={handleReviewPress}
         latestReviews={latestReviews}
+        avatarName={user?.name ?? undefined}
+        avatarSrc={user?.avatar ?? undefined}
       />
       <Modal
         visible={reviewModalOpen}

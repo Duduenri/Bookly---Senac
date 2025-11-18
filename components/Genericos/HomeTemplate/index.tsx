@@ -25,6 +25,8 @@ export interface HomeTemplateProps {
     profile?: { name: string; avatar?: string | null } | null;
     book?: { title: string; author: string } | null;
   }>;
+  avatarName?: string;
+  avatarSrc?: string;
 }
 
 export const HomeTemplate: React.FC<HomeTemplateProps> = ({
@@ -39,14 +41,16 @@ export const HomeTemplate: React.FC<HomeTemplateProps> = ({
   onReviewPress,
   stores = [],
   latestReviews = [],
+  avatarName,
+  avatarSrc,
 }) => {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header personalizado */}
       <Header
-        avatarName="Usuário"
-        avatarSrc="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
-        title="Bookly"
+        avatarName={avatarName || 'Usuário'}
+        avatarSrc={avatarSrc}
+        title={avatarName || 'Bookly'}
         subtitle="Descubra milhares de livros"
         avatarSize="md"
         avatarColorPalette="blue"
