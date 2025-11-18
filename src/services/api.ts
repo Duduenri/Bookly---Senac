@@ -43,7 +43,7 @@ class ApiClient {
 
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      if (error && typeof error === 'object' && 'isAxiosError' in error) {
         const status = error.response?.status ?? 'desconhecido';
         const statusText = error.response?.statusText ?? '';
         const responseData = error.response?.data as { message?: string } | undefined;

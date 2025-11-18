@@ -1,4 +1,3 @@
-import { useAuth } from '@/src/contexts/AuthContext';
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -29,8 +28,6 @@ export const BookList: React.FC<BookListProps> = ({
   onFavoritePress,
   onWishlistPress,
 }) => {
-  const { user } = useAuth();
-
   const getConditionText = (condition: string) => {
     const conditions = {
       NEW: 'Novo',

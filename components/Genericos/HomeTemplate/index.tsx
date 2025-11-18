@@ -17,14 +17,14 @@ export interface HomeTemplateProps {
   onFriendsPress?: () => void;
   onReviewPress?: () => void;
   stores?: Store[];
-  latestReviews?: Array<{
+  latestReviews?: {
     id: string;
     rating: number;
     comment?: string | null;
     createdAt: string;
     profile?: { name: string; avatar?: string | null } | null;
     book?: { title: string; author: string } | null;
-  }>;
+  }[];
   avatarName?: string;
   avatarSrc?: string;
 }

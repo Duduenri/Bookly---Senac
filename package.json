@@ -5,7 +5,7 @@
   "scripts": {
     "start": "npx expo start",
     "dev": "npx expo start --dev-client",
-    "build": "npx expo build",
+    "build": "tsc --noEmit",
     "lint": "npx expo lint",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "npx expo start --android",

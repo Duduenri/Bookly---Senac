@@ -94,7 +94,7 @@ async function testTriggers() {
     });
     
     console.log(`✅ Encontradas ${listingsWithDetails.length} listagens com detalhes:`);
-    listingsWithDetails.forEach(listing => {
+    listingsWithDetails.forEach((listing: any) => {
       console.log(`   • ${listing.book?.title} por ${listing.profile?.name} em ${listing.location?.name}`);
     });
     

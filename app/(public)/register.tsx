@@ -1,5 +1,5 @@
-import Button from '@/components/Genericos/Button';
-import Input, { PasswordInput } from '@/components/Genericos/Input';
+import { Button } from '@/components/Genericos/Button';
+import { Input, PasswordInput } from '@/components/Genericos/Input';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useToast } from '@/src/hooks/useToast';
 import { router } from 'expo-router';

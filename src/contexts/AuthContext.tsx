@@ -1,5 +1,5 @@
 import { supabase } from '@/src/services/supabase';
-import React, { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 
 interface User {
   id: string;
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               name: userName, 
               avatar: profile?.avatar ?? u.user_metadata?.avatar ?? null 
             });
-          } catch (err) {
+          } catch {
             // Em caso de erro, usar user_metadata
             setUser({ 
               id: u.id, 
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             name: userName, 
             avatar: profile?.avatar ?? u.user_metadata?.avatar ?? null 
           });
-        } catch (err) {
+        } catch {
           // Em caso de erro, usar user_metadata
           setUser({ 
             id: u.id, 
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           name: userName, 
           avatar: profile?.avatar ?? data.user.user_metadata?.avatar ?? null 
         });
-      } catch (err) {
+      } catch {
         setUser({ 
           id: data.user.id, 
           email: data.user.email ?? null, 

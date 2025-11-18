@@ -48,7 +48,7 @@ export default function ReviewScreen() {
     };
     run();
     return () => { mounted = false; };
-  }, [bookId, user?.id]);
+  }, [bookId, user?.id, user?.email, user?.name, user?.avatar]);
 
   const canSubmit = useMemo(() => !!bookId && rating >= 1 && rating <= 5, [bookId, rating]);
 
@@ -121,7 +121,7 @@ export default function ReviewScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [canSubmit, myProfileId, bookId, rating, comment, refreshList]);
+  }, [canSubmit, myProfileId, bookId, rating, comment, refreshList, reviews, user]);
 
   const renderItem = ({ item }: { item: ReviewItem }) => (
     <View style={styles.card}>

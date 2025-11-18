@@ -57,7 +57,7 @@ export default function HomeScreen() {
         const booksData = await getBooksFromSupabase();
         if (!isMounted) return;
         setBooks(booksData as Book[]);
-      } catch (err) {
+      } catch {
         if (!isMounted) return;
         setError('Erro ao carregar os livros. Tente novamente.');
         setBooks([]);
@@ -92,7 +92,7 @@ export default function HomeScreen() {
 
       await addToFavorites(book.id, user.id);
       Alert.alert('Favorito', `"${book.title}" adicionado aos favoritos! ❤️`);
-    } catch (error) {
+    } catch {
       Alert.alert('Erro', 'Não foi possível adicionar aos favoritos. Tente novamente.');
     }
   }, [user?.id, addToFavorites]);
@@ -106,7 +106,7 @@ export default function HomeScreen() {
 
       await addToWishlist(book.id, user.id);
       Alert.alert('Lista de Desejos', `"${book.title}" adicionado à lista de desejos! 📝`);
-    } catch (error) {
+    } catch {
       Alert.alert('Erro', 'Não foi possível adicionar à lista de desejos. Tente novamente.');
     }
   }, [user?.id, addToWishlist]);

@@ -14,7 +14,7 @@ async function testConnection() {
     console.log('\n📊 Verificando tabela profiles...');
     const profiles = await prisma.profile.findMany();
     console.log(`✅ Encontrados ${profiles.length} perfis:`);
-    profiles.forEach(profile => {
+    profiles.forEach((profile: any) => {
       console.log(`   • ${profile.name} (${profile.email}) - ID: ${profile.id}, UserID: ${profile.userId}`);
     });
     

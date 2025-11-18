@@ -20,7 +20,9 @@ export type LivrariasMapProps = {
 
 export default function LivrariasMap(props: LivrariasMapProps) {
   const Impl = Platform.OS === 'web'
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     ? require('./LivrariasMap.web').default
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     : require('./LivrariasMap.native').default;
   return <Impl {...props} />;
 }
