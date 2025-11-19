@@ -1,22 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, SafeAreaView } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/src/contexts/AuthContext';
-import { Profile, getProfileByEmail, updateProfile } from '@/src/services/profileService';
 import { Collapsible } from '@/components/Collapsible';
-import { getMyListings, type ListingItem, type ListingStatus } from '@/src/services/listingsService';
-import { getMyReviews, type ReviewItem } from '@/src/services/reviewsService';
-import { getMyFavorites, type FavoriteItem } from '@/src/services/favoritesService';
-import { getMyWishlist, type WishlistItem } from '@/src/services/wishlistService';
-import { getMyFriends, type FriendItem } from '@/src/services/friendsService';
 import { Header } from '@/components/Genericos/Header';
+import { useAuth } from '@/src/contexts/AuthContext';
+import { getMyFavorites, type FavoriteItem } from '@/src/services/favoritesService';
+import { getMyFriends, type FriendItem } from '@/src/services/friendsService';
+import { getMyListings, type ListingItem, type ListingStatus } from '@/src/services/listingsService';
+import { Profile, getProfileByEmail, updateProfile } from '@/src/services/profileService';
+import { getMyReviews, type ReviewItem } from '@/src/services/reviewsService';
+import { getMyWishlist, type WishlistItem } from '@/src/services/wishlistService';
 import { PadraoBookly, paletasCores } from '@/utils/colors';
+import { shadowStyles } from '@/utils/shadowStyles';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({
     name: '',
     phone: '',
@@ -146,6 +148,7 @@ export default function ProfileScreen() {
         bio: form.bio || null,
       });
       setProfile(updated);
+      setEditMode(false);
       Alert.alert('Sucesso', 'Perfil atualizado!');
     } catch (e: any) {
       console.error(e);
@@ -155,10 +158,21 @@ export default function ProfileScreen() {
     }
   };
 
+  const onCancelEdit = () => {
+    setForm({
+      name: profile?.name ?? user?.name ?? '',
+      phone: profile?.phone ?? '',
+      avatar: profile?.avatar ?? user?.avatar ?? '',
+      bio: profile?.bio ?? '',
+    });
+    setEditMode(false);
+  };
+
   if (authLoading) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.subtitle}>Carregando...</Text>
+      <View style={styles.centerLoading}>
+        <ActivityIndicator size="large" color={PadraoBookly.corPrincipal} />
+        <Text style={styles.loadingText}>Carregando...</Text>
       </View>
     );
   }
@@ -174,11 +188,11 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      {/* Header no mesmo estilo da Home */}
+      {/* Header */}
       <Header
         avatarName={profile?.name || user?.name || 'Usuário'}
         avatarSrc={profile?.avatar ?? user?.avatar ?? undefined}
-        title={profile?.name || user?.name || 'Meu Perfil'}
+        title="Meu Perfil"
         subtitle={user?.email ?? undefined}
         avatarSize="md"
         avatarColorPalette="blue"
@@ -189,152 +203,309 @@ export default function ProfileScreen() {
       />
 
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Card de edição do perfil */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Informações</Text>
-
-          <View style={styles.avatarRow}>
+        {/* Hero Card - Avatar e Info Principal */}
+        <View style={styles.heroCard}>
+          <View style={styles.avatarContainer}>
             {form.avatar ? (
-              <Image source={{ uri: form.avatar }} style={styles.avatar} />
+              <Image source={{ uri: form.avatar }} style={styles.avatarLarge} />
             ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Text style={{ color: '#888' }}>Sem foto</Text>
+              <View style={[styles.avatarLarge, styles.avatarPlaceholder]}>
+                <Text style={styles.avatarInitials}>
+                  {(profile?.name || user?.name || 'U').charAt(0).toUpperCase()}
+                </Text>
               </View>
+            )}
+            {editMode && (
+              <TouchableOpacity style={styles.editAvatarButton}>
+                <Text style={styles.editAvatarIcon}>📷</Text>
+              </TouchableOpacity>
             )}
           </View>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Nome</Text>
-            <TextInput
-              style={styles.input}
-              value={form.name}
-              onChangeText={(t) => setForm((f) => ({ ...f, name: t }))}
-              placeholder="Seu nome"
-            />
-          </View>
+          <Text style={styles.profileName}>{profile?.name || user?.name || 'Usuário'}</Text>
+          <Text style={styles.profileEmail}>{user?.email}</Text>
+          {profile?.bio && !editMode && (
+            <Text style={styles.profileBio}>{profile.bio}</Text>
+          )}
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Bio</Text>
-            <TextInput
-              style={[styles.input, { height: 80 }]} multiline
-              value={form.bio}
-              onChangeText={(t) => setForm((f) => ({ ...f, bio: t }))}
-              placeholder="Fale um pouco sobre você"
-            />
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Telefone</Text>
-            <TextInput
-              style={styles.input}
-              value={form.phone}
-              onChangeText={(t) => setForm((f) => ({ ...f, phone: t }))}
-              placeholder="(xx) xxxxx-xxxx"
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>URL do Avatar</Text>
-            <TextInput
-              style={styles.input}
-              value={form.avatar}
-              onChangeText={(t) => setForm((f) => ({ ...f, avatar: t }))}
-              placeholder="https://..."
-              autoCapitalize='none'
-            />
-          </View>
-
-          <TouchableOpacity style={[styles.button, loading && { opacity: 0.6 }]} onPress={onSave} disabled={loading}>
-            <Text style={styles.buttonText}>{loading ? 'Salvando...' : 'Salvar'}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={logout}>
-            <Text style={[styles.buttonText, { color: '#333' }]}>Sair</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Sections with collapsible and pagination */}
-        <View style={styles.sectionCard}>
-          <Collapsible title={`Meus Anúncios (${listingsTotal})`}>
-        {/* Filtros simples por status */}
-        <View style={styles.row}>
-          {(['ACTIVE','SOLD','RENTED','INACTIVE'] as ListingStatus[]).map(s => (
-            <TouchableOpacity key={s} style={[styles.chip, listingsStatus === s && styles.chipActive]} onPress={() => { setListingsStatus(s === listingsStatus ? undefined : s); setListingsPage(1); }}>
-              <Text style={[styles.chipText, listingsStatus === s && styles.chipTextActive]}>{s}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        {listings.map(it => (
-          <View key={it.id} style={styles.itemRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.itemTitle}>{it.book?.title ?? `Anúncio ${it.id}`}</Text>
-              <Text style={styles.itemSub}>{it.transactionType} • {it.status} • {new Date(it.createdAt).toLocaleDateString()}</Text>
+          {/* Estatísticas rápidas */}
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{listingsTotal}</Text>
+              <Text style={styles.statLabel}>Anúncios</Text>
             </View>
-            {it.book?.coverImage ? (
-              <Image source={{ uri: it.book.coverImage }} style={styles.thumb} />
-            ) : null}
-          </View>
-        ))}
-        <Pagination total={listingsTotal} page={listingsPage} pageSize={listingsPageSize} onPrev={() => setListingsPage(p => Math.max(1, p-1))} onNext={() => setListingsPage(p => p + 1)} />
-          </Collapsible>
-        </View>
-
-        <View style={styles.sectionCard}>
-          <Collapsible title={`Minhas Reviews (${reviewsTotal})`}>
-        {reviews.map(rv => (
-          <View key={rv.id} style={styles.itemRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.itemTitle}>Nota {rv.rating}/5</Text>
-              <Text style={styles.itemSub}>{rv.book?.title ?? rv.bookstore?.name ?? rv.secondhandStore?.name ?? `Listing ${rv.listing?.id ?? ''}`}</Text>
-              {rv.comment ? <Text style={styles.itemSub}>{rv.comment}</Text> : null}
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{reviewsTotal}</Text>
+              <Text style={styles.statLabel}>Reviews</Text>
             </View>
-            <Text style={styles.itemSub}>{new Date(rv.createdAt).toLocaleDateString()}</Text>
-          </View>
-        ))}
-        <Pagination total={reviewsTotal} page={reviewsPage} pageSize={reviewsPageSize} onPrev={() => setReviewsPage(p => Math.max(1, p-1))} onNext={() => setReviewsPage(p => p + 1)} />
-          </Collapsible>
-        </View>
-
-        <View style={styles.sectionCard}>
-          <Collapsible title={`Favoritos (${favoritesTotal})`}>
-        {favorites.map(fv => (
-          <View key={fv.id} style={styles.itemRow}>
-            <Text style={styles.itemTitle}>{fv.book?.title ?? fv.bookstore?.name ?? fv.secondhandStore?.name ?? `Listing ${fv.listing?.id ?? ''}`}</Text>
-            <Text style={styles.itemSub}>{new Date(fv.createdAt).toLocaleDateString()}</Text>
-          </View>
-        ))}
-        <Pagination total={favoritesTotal} page={favoritesPage} pageSize={favoritesPageSize} onPrev={() => setFavoritesPage(p => Math.max(1, p-1))} onNext={() => setFavoritesPage(p => p + 1)} />
-          </Collapsible>
-        </View>
-
-        <View style={styles.sectionCard}>
-          <Collapsible title={`Wishlist (${wishlistTotal})`}>
-        {wishlist.map(w => (
-          <View key={w.id} style={styles.itemRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.itemTitle}>{w.book?.title ?? w.title ?? `Item ${w.id}`}</Text>
-              <Text style={styles.itemSub}>{[w.author, w.isbn].filter(Boolean).join(' • ')}</Text>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{friendsTotal}</Text>
+              <Text style={styles.statLabel}>Amigos</Text>
             </View>
-            <Text style={styles.itemSub}>{new Date(w.createdAt).toLocaleDateString()}</Text>
           </View>
-        ))}
-        <Pagination total={wishlistTotal} page={wishlistPage} pageSize={wishlistPageSize} onPrev={() => setWishlistPage(p => Math.max(1, p-1))} onNext={() => setWishlistPage(p => p + 1)} />
-          </Collapsible>
+
+          {/* Botões de ação */}
+          <View style={styles.actionRow}>
+            {!editMode ? (
+              <>
+                <TouchableOpacity 
+                  style={[styles.primaryButton, { flex: 1 }]} 
+                  onPress={() => setEditMode(true)}
+                >
+                  <Text style={styles.primaryButtonText}>✏️ Editar Perfil</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.logoutButton} 
+                  onPress={logout}
+                >
+                  <Text style={styles.logoutButtonText}>Sair</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity 
+                  style={[styles.primaryButton, { flex: 1 }]} 
+                  onPress={onSave}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.primaryButtonText}>💾 Salvar</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.secondaryButton} 
+                  onPress={onCancelEdit}
+                  disabled={loading}
+                >
+                  <Text style={styles.secondaryButtonText}>✖️ Cancelar</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
         </View>
 
-        <View style={styles.sectionCard}>
-          <Collapsible title={`Amigos (${friendsTotal})`}>
-        {friends.map(fr => (
-          <View key={fr.id} style={styles.itemRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.itemTitle}>{fr.profile.name}</Text>
+        {/* Formulário de Edição */}
+        {editMode && (
+          <View style={styles.editCard}>
+            <Text style={styles.sectionTitle}>Editar Informações</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Nome completo</Text>
+              <TextInput
+                style={styles.textInput}
+                value={form.name}
+                onChangeText={(t) => setForm((f) => ({ ...f, name: t }))}
+                placeholder="Digite seu nome"
+                placeholderTextColor="#999"
+              />
             </View>
-            {fr.profile.avatar ? <Image source={{ uri: fr.profile.avatar }} style={styles.thumbRound} /> : null}
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Bio</Text>
+              <TextInput
+                style={[styles.textInput, styles.textArea]}
+                multiline
+                numberOfLines={4}
+                value={form.bio}
+                onChangeText={(t) => setForm((f) => ({ ...f, bio: t }))}
+                placeholder="Conte um pouco sobre você..."
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Telefone</Text>
+              <TextInput
+                style={styles.textInput}
+                value={form.phone}
+                onChangeText={(t) => setForm((f) => ({ ...f, phone: t }))}
+                placeholder="(00) 00000-0000"
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>URL do Avatar</Text>
+              <TextInput
+                style={styles.textInput}
+                value={form.avatar}
+                onChangeText={(t) => setForm((f) => ({ ...f, avatar: t }))}
+                placeholder="https://..."
+                placeholderTextColor="#999"
+                autoCapitalize='none'
+              />
+            </View>
           </View>
-        ))}
-        <Pagination total={friendsTotal} page={friendsPage} pageSize={friendsPageSize} onPrev={() => setFriendsPage(p => Math.max(1, p-1))} onNext={() => setFriendsPage(p => p + 1)} />
-          </Collapsible>
+        )}
+
+        {/* Seções com Collapsible */}
+        <View style={styles.sectionsContainer}>
+          {/* Meus Anúncios */}
+          <View style={styles.sectionCard}>
+            <Collapsible title={`📚 Meus Anúncios (${listingsTotal})`}>
+              <View style={styles.filterRow}>
+                {(['ACTIVE','SOLD','RENTED','INACTIVE'] as ListingStatus[]).map(s => (
+                  <TouchableOpacity 
+                    key={s} 
+                    style={[styles.filterChip, listingsStatus === s && styles.filterChipActive]} 
+                    onPress={() => { 
+                      setListingsStatus(s === listingsStatus ? undefined : s); 
+                      setListingsPage(1); 
+                    }}
+                  >
+                    <Text style={[styles.filterChipText, listingsStatus === s && styles.filterChipTextActive]}>
+                      {s}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {listings.length === 0 ? (
+                <Text style={styles.emptyText}>Nenhum anúncio encontrado</Text>
+              ) : (
+                listings.map(it => (
+                  <View key={it.id} style={styles.listItem}>
+                    <View style={styles.listItemContent}>
+                      <Text style={styles.listItemTitle}>{it.book?.title ?? `Anúncio ${it.id}`}</Text>
+                      <Text style={styles.listItemSubtitle}>
+                        {it.transactionType} • {it.status} • {new Date(it.createdAt).toLocaleDateString()}
+                      </Text>
+                    </View>
+                    {it.book?.coverImage && (
+                      <Image source={{ uri: it.book.coverImage }} style={styles.listItemImage} />
+                    )}
+                  </View>
+                ))
+              )}
+              <Pagination 
+                total={listingsTotal} 
+                page={listingsPage} 
+                pageSize={listingsPageSize} 
+                onPrev={() => setListingsPage(p => Math.max(1, p-1))} 
+                onNext={() => setListingsPage(p => p + 1)} 
+              />
+            </Collapsible>
+          </View>
+
+          {/* Minhas Reviews */}
+          <View style={styles.sectionCard}>
+            <Collapsible title={`⭐ Minhas Reviews (${reviewsTotal})`}>
+              {reviews.length === 0 ? (
+                <Text style={styles.emptyText}>Nenhuma review encontrada</Text>
+              ) : (
+                reviews.map(rv => (
+                  <View key={rv.id} style={styles.listItem}>
+                    <View style={styles.listItemContent}>
+                      <View style={styles.ratingRow}>
+                        <Text style={styles.ratingStars}>{'⭐'.repeat(rv.rating)}</Text>
+                        <Text style={styles.ratingNumber}>{rv.rating}/5</Text>
+                      </View>
+                      <Text style={styles.listItemSubtitle}>
+                        {rv.book?.title ?? rv.bookstore?.name ?? rv.secondhandStore?.name ?? `Listing ${rv.listing?.id ?? ''}`}
+                      </Text>
+                      {rv.comment && <Text style={styles.reviewComment}>{rv.comment}</Text>}
+                    </View>
+                    <Text style={styles.dateText}>{new Date(rv.createdAt).toLocaleDateString()}</Text>
+                  </View>
+                ))
+              )}
+              <Pagination 
+                total={reviewsTotal} 
+                page={reviewsPage} 
+                pageSize={reviewsPageSize} 
+                onPrev={() => setReviewsPage(p => Math.max(1, p-1))} 
+                onNext={() => setReviewsPage(p => p + 1)} 
+              />
+            </Collapsible>
+          </View>
+
+          {/* Favoritos */}
+          <View style={styles.sectionCard}>
+            <Collapsible title={`❤️ Favoritos (${favoritesTotal})`}>
+              {favorites.length === 0 ? (
+                <Text style={styles.emptyText}>Nenhum favorito encontrado</Text>
+              ) : (
+                favorites.map(fv => (
+                  <View key={fv.id} style={styles.listItem}>
+                    <View style={styles.listItemContent}>
+                      <Text style={styles.listItemTitle}>
+                        {fv.book?.title ?? fv.bookstore?.name ?? fv.secondhandStore?.name ?? `Listing ${fv.listing?.id ?? ''}`}
+                      </Text>
+                    </View>
+                    <Text style={styles.dateText}>{new Date(fv.createdAt).toLocaleDateString()}</Text>
+                  </View>
+                ))
+              )}
+              <Pagination 
+                total={favoritesTotal} 
+                page={favoritesPage} 
+                pageSize={favoritesPageSize} 
+                onPrev={() => setFavoritesPage(p => Math.max(1, p-1))} 
+                onNext={() => setFavoritesPage(p => p + 1)} 
+              />
+            </Collapsible>
+          </View>
+
+          {/* Wishlist */}
+          <View style={styles.sectionCard}>
+            <Collapsible title={`📝 Lista de Desejos (${wishlistTotal})`}>
+              {wishlist.length === 0 ? (
+                <Text style={styles.emptyText}>Nenhum item na wishlist</Text>
+              ) : (
+                wishlist.map(w => (
+                  <View key={w.id} style={styles.listItem}>
+                    <View style={styles.listItemContent}>
+                      <Text style={styles.listItemTitle}>{w.book?.title ?? w.title ?? `Item ${w.id}`}</Text>
+                      <Text style={styles.listItemSubtitle}>{[w.author, w.isbn].filter(Boolean).join(' • ')}</Text>
+                    </View>
+                    <Text style={styles.dateText}>{new Date(w.createdAt).toLocaleDateString()}</Text>
+                  </View>
+                ))
+              )}
+              <Pagination 
+                total={wishlistTotal} 
+                page={wishlistPage} 
+                pageSize={wishlistPageSize} 
+                onPrev={() => setWishlistPage(p => Math.max(1, p-1))} 
+                onNext={() => setWishlistPage(p => p + 1)} 
+              />
+            </Collapsible>
+          </View>
+
+          {/* Amigos */}
+          <View style={styles.sectionCard}>
+            <Collapsible title={`👥 Amigos (${friendsTotal})`}>
+              {friends.length === 0 ? (
+                <Text style={styles.emptyText}>Nenhum amigo encontrado</Text>
+              ) : (
+                friends.map(fr => (
+                  <View key={fr.id} style={styles.listItem}>
+                    <View style={styles.listItemContent}>
+                      <Text style={styles.listItemTitle}>{fr.profile.name}</Text>
+                    </View>
+                    {fr.profile.avatar ? (
+                      <Image source={{ uri: fr.profile.avatar }} style={styles.friendAvatar} />
+                    ) : (
+                      <View style={[styles.friendAvatar, styles.avatarPlaceholder]}>
+                        <Text style={styles.friendInitial}>{fr.profile.name.charAt(0).toUpperCase()}</Text>
+                      </View>
+                    )}
+                  </View>
+                ))
+              )}
+              <Pagination 
+                total={friendsTotal} 
+                page={friendsPage} 
+                pageSize={friendsPageSize} 
+                onPrev={() => setFriendsPage(p => Math.max(1, p-1))} 
+                onNext={() => setFriendsPage(p => p + 1)} 
+              />
+            </Collapsible>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -344,12 +515,24 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: PadraoBookly.corSecundaria,
+    backgroundColor: '#ffffff',
   },
   container: {
     padding: 16,
+    gap: 16,
+    backgroundColor: '#ffffff',
+  },
+  centerLoading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
     gap: 12,
-    backgroundColor: paletasCores.cinza.texto,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: paletasCores.cinza.solido,
+    marginTop: 8,
   },
   center: {
     flex: 1,
@@ -369,126 +552,390 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
   },
-  card: {
-    backgroundColor: paletasCores.cinza.texto,
-    borderBottomWidth: 1,
-    borderBottomColor: paletasCores.cinza.contorno,
-    paddingBottom: 16,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: paletasCores.principal.solido,
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  avatarRow: {
+  
+  // Hero Card - Card principal com avatar e stats
+  heroCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 24,
     alignItems: 'center',
-    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    ...shadowStyles.medium,
+    gap: 12,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#eee',
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: 8,
+  },
+  avatarLarge: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f0f0f0',
   },
   avatarPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: PadraoBookly.corPrincipal,
   },
-  field: {
-    gap: 6,
-    paddingHorizontal: 4,
-  },
-  label: {
-    fontSize: 14,
-    color: '#444',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    backgroundColor: 'white',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  secondaryButton: {
-    backgroundColor: '#f2f2f2',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  sectionCard: {
-    backgroundColor: paletasCores.cinza.texto,
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: paletasCores.cinza.contorno,
-  },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#fff',
-  },
-  chipActive: {
-    backgroundColor: '#0d2f2c',
-    borderColor: '#0d2f2c',
-  },
-  chipText: {
-    color: '#333',
-    fontWeight: '600',
-  },
-  chipTextActive: {
+  avatarInitials: {
+    fontSize: 48,
+    fontWeight: '700',
     color: '#fff',
   },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    gap: 12,
-  },
-  itemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#222',
-  },
-  itemSub: {
-    fontSize: 12,
-    color: '#666',
-  },
-  thumb: {
-    width: 48,
-    height: 64,
-    borderRadius: 6,
-    backgroundColor: '#eee',
-  },
-  thumbRound: {
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#eee',
+    backgroundColor: PadraoBookly.corPrincipal,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+    ...shadowStyles.small,
+  },
+  editAvatarIcon: {
+    fontSize: 20,
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: PadraoBookly.corPrincipal,
+    textAlign: 'center',
+  },
+  profileEmail: {
+    fontSize: 14,
+    color: paletasCores.cinza.solido,
+    textAlign: 'center',
+  },
+  profileBio: {
+    fontSize: 14,
+    color: '#555',
+    textAlign: 'center',
+    marginTop: 4,
+    paddingHorizontal: 16,
+    lineHeight: 20,
+  },
+  
+  // Stats Row
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  statItem: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: PadraoBookly.corPrincipal,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: paletasCores.cinza.solido,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: '#f0f0f0',
+  },
+  
+  // Action Buttons
+  actionRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+    marginTop: 8,
+  },
+  primaryButton: {
+    backgroundColor: PadraoBookly.corPrincipal,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadowStyles.button,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: '#f5f5f5',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  secondaryButtonText: {
+    color: PadraoBookly.corPrincipal,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  iconButton: {
+    backgroundColor: '#f5f5f5',
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconButtonText: {
+    fontSize: 24,
+  },
+  logoutButton: {
+    backgroundColor: '#f5f5f5',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  logoutButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  
+  // Edit Card
+  editCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    ...shadowStyles.medium,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: PadraoBookly.corPrincipal,
+    marginBottom: 4,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  textInput: {
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    backgroundColor: '#ffffff',
+    color: '#333',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+    paddingTop: 12,
+  },
+  
+  // Sections Container
+  sectionsContainer: {
+    gap: 12,
+  },
+  sectionCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    ...shadowStyles.medium,
+  },
+  
+  // Filters
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  filterChip: {
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
+    borderRadius: 24,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    backgroundColor: '#ffffff',
+    ...shadowStyles.small,
+  },
+  filterChipActive: {
+    backgroundColor: PadraoBookly.corPrincipal,
+    borderColor: PadraoBookly.corPrincipal,
+  },
+  filterChipText: {
+    color: '#666',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  filterChipTextActive: {
+    color: '#fff',
+  },
+  
+  // List Items
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#f5f5f5',
+    gap: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    marginBottom: 10,
+    ...shadowStyles.small,
+  },
+  listItemContent: {
+    flex: 1,
+    gap: 6,
+  },
+  listItemTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: PadraoBookly.corPrincipal,
+  },
+  listItemSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 18,
+  },
+  listItemImage: {
+    width: 52,
+    height: 70,
+    borderRadius: 10,
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#e8e8e8',
+  },
+  
+  // Reviews
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  ratingStars: {
+    fontSize: 16,
+  },
+  ratingNumber: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: paletasCores.amarelo.solido,
+  },
+  reviewComment: {
+    fontSize: 13,
+    color: '#555',
+    fontStyle: 'italic',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  
+  // Friends
+  friendAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f0f0f0',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    ...shadowStyles.small,
+  },
+  friendInitial: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  
+  // Empty State
+  emptyText: {
+    fontSize: 15,
+    color: '#999',
+    textAlign: 'center',
+    paddingVertical: 40,
+    fontStyle: 'italic',
+    backgroundColor: '#fafafa',
+    borderRadius: 16,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    borderStyle: 'dashed',
+  },
+  
+  // Date
+  dateText: {
+    fontSize: 12,
+    color: '#999',
+  },
+  
+  // Pagination
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 16,
+    paddingHorizontal: 4,
+    borderTopWidth: 1,
+    borderTopColor: '#e8e8e8',
+    backgroundColor: '#ffffff',
+  },
+  paginationInfo: {
+    fontSize: 13,
+    color: '#666',
+  },
+  paginationButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  paginationButton: {
+    backgroundColor: PadraoBookly.corPrincipal,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    ...shadowStyles.small,
+  },
+  paginationButtonDisabled: {
+    opacity: 0.3,
+    backgroundColor: '#d0d0d0',
+  },
+  paginationButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  paginationPageText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
   },
 });
 
@@ -496,15 +943,23 @@ const styles = StyleSheet.create({
 function Pagination({ total, page, pageSize, onPrev, onNext }: { total: number; page: number; pageSize: number; onPrev: () => void; onNext: () => void }) {
   const maxPage = Math.max(1, Math.ceil(total / pageSize));
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-      <Text style={{ color: '#666' }}>Total: {total}</Text>
-      <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-        <TouchableOpacity onPress={onPrev} disabled={page <= 1} style={[styles.button, styles.secondaryButton, { paddingVertical: 8, opacity: page <= 1 ? 0.5 : 1 }]}>
-          <Text style={[styles.buttonText, { color: '#333' }]}>Anterior</Text>
+    <View style={styles.paginationContainer}>
+      <Text style={styles.paginationInfo}>Total: {total}</Text>
+      <View style={styles.paginationButtons}>
+        <TouchableOpacity 
+          onPress={onPrev} 
+          disabled={page <= 1} 
+          style={[styles.paginationButton, page <= 1 && styles.paginationButtonDisabled]}
+        >
+          <Text style={styles.paginationButtonText}>◀ Anterior</Text>
         </TouchableOpacity>
-        <Text style={{ color: '#666' }}>{page} / {maxPage}</Text>
-        <TouchableOpacity onPress={onNext} disabled={page >= maxPage} style={[styles.button, styles.secondaryButton, { paddingVertical: 8, opacity: page >= maxPage ? 0.5 : 1 }]}>
-          <Text style={[styles.buttonText, { color: '#333' }]}>Próxima</Text>
+        <Text style={styles.paginationPageText}>{page} / {maxPage}</Text>
+        <TouchableOpacity 
+          onPress={onNext} 
+          disabled={page >= maxPage} 
+          style={[styles.paginationButton, page >= maxPage && styles.paginationButtonDisabled]}
+        >
+          <Text style={styles.paginationButtonText}>Próxima ▶</Text>
         </TouchableOpacity>
       </View>
     </View>
