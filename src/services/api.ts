@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, isAxiosError } from 'axios';
 
 // Configuração da API
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://127.0.0.1:3000'; // URL da API (pode ser definida via env)
@@ -43,7 +43,7 @@ class ApiClient {
 
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      if (isAxiosError(error)) {
         const status = error.response?.status ?? 'desconhecido';
         const statusText = error.response?.statusText ?? '';
         const responseData = error.response?.data as { message?: string } | undefined;

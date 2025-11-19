@@ -5,6 +5,7 @@ import 'react-native-url-polyfill/auto'
 // Importação condicional do AsyncStorage apenas para plataformas nativas
 let AsyncStorage: any
 if (Platform.OS !== 'web') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   AsyncStorage = require('@react-native-async-storage/async-storage').default
 }
 

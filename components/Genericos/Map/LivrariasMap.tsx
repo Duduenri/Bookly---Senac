@@ -10,17 +10,21 @@ export type Store = {
   latitude: number;
   longitude: number;
   address?: string;
+  type?: 'bookstore' | 'secondhand_store';
 };
 
 export type LivrariasMapProps = {
   stores: Store[];
   initialRegion?: any;
   height?: number;
+  onStorePress?: (storeId: string, storeType?: 'bookstore' | 'secondhand_store') => void;
 };
 
 export default function LivrariasMap(props: LivrariasMapProps) {
   const Impl = Platform.OS === 'web'
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     ? require('./LivrariasMap.web').default
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     : require('./LivrariasMap.native').default;
   return <Impl {...props} />;
 }

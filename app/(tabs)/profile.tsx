@@ -14,7 +14,7 @@ import { PadraoBookly, paletasCores } from '@/utils/colors';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [form, setForm] = useState({
@@ -53,10 +53,10 @@ export default function ProfileScreen() {
 
   // Proteção de rota: redireciona para login se não autenticado
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       router.replace('/(public)/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, authLoading, router]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -155,6 +155,14 @@ export default function ProfileScreen() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.subtitle}>Carregando...</Text>
+      </View>
+    );
+  }
+
   if (!isAuthenticated || !user) {
     return (
       <View style={styles.center}>
@@ -170,7 +178,7 @@ export default function ProfileScreen() {
       <Header
         avatarName={profile?.name || user?.name || 'Usuário'}
         avatarSrc={profile?.avatar ?? user?.avatar ?? undefined}
-        title="Meu Perfil"
+        title={profile?.name || user?.name || 'Meu Perfil'}
         subtitle={user?.email ?? undefined}
         avatarSize="md"
         avatarColorPalette="blue"

@@ -15,6 +15,7 @@ export type Store = {
   latitude: number;
   longitude: number;
   address?: string;
+  type?: 'bookstore' | 'secondhand_store';
 };
 
 type Region = {
@@ -28,10 +29,18 @@ type LivrariasMapProps = {
   stores: Store[];
   initialRegion?: Region;
   height?: number;
+  onStorePress?: (storeId: string, storeType?: 'bookstore' | 'secondhand_store') => void;
 };
 
-export default function LivrariasMap({ stores, initialRegion, height = 300 }: LivrariasMapProps) {
+export default function LivrariasMap({ stores, initialRegion, height = 300, onStorePress }: LivrariasMapProps) {
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  
+  const handleMarkerClick = (store: Store) => {
+    setSelectedStoreId(store.id);
+    if (onStorePress) {
+      onStorePress(store.id, store.type);
+    }
+  };
 
   const defaultRegion: Region =
     initialRegion || {
@@ -91,7 +100,7 @@ export default function LivrariasMap({ stores, initialRegion, height = 300 }: Li
               key={store.id}
               position={{ lat: store.latitude, lng: store.longitude }}
               title={store.name}
-              onClick={() => setSelectedStoreId(store.id)}
+              onClick={() => handleMarkerClick(store)}
             />
           ))}
 
