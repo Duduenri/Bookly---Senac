@@ -6,21 +6,16 @@ import {
   RefreshControl,
   Alert,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import {
   Card,
   Title,
   Paragraph,
-  Chip,
   ActivityIndicator,
   Text,
   Avatar,
-  Surface,
   Searchbar,
-  SegmentedButtons,
   IconButton,
-  Button,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,8 +23,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { listAllStores, type Store } from '@/src/services/storeService';
 import { paletasCores } from '@/utils/colors';
 import { shadowStyles } from '@/utils/shadowStyles';
-
-const { width } = Dimensions.get('window');
 
 export default function StoresListScreen() {
   const router = useRouter();

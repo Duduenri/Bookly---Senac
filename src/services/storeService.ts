@@ -11,7 +11,7 @@ export interface Store {
   email?: string;
   website?: string;
   type: StoreType;
-  locations?: Array<{
+  locations?: {
     id: string;
     name: string;
     address: string;
@@ -20,7 +20,7 @@ export interface Store {
     zipCode?: string;
     latitude?: number;
     longitude?: number;
-  }>;
+  }[];
 }
 
 export interface StoreListing {
@@ -138,7 +138,7 @@ export async function getBookstoreListings(bookstoreId: string): Promise<StoreLi
       exchangeFor,
       transactionType,
       status,
-      book:books (
+      book:books!inner (
         id,
         title,
         author,
@@ -148,7 +148,7 @@ export async function getBookstoreListings(bookstoreId: string): Promise<StoreLi
         pages,
         language
       ),
-      location:locations (
+      location:locations!inner (
         city,
         state
       )
@@ -161,7 +161,7 @@ export async function getBookstoreListings(bookstoreId: string): Promise<StoreLi
     throw error;
   }
 
-  return (data ?? []) as StoreListing[];
+  return (data ?? []) as unknown as StoreListing[];
 }
 
 /**
@@ -178,7 +178,7 @@ export async function getSecondhandStoreListings(storeId: string): Promise<Store
       exchangeFor,
       transactionType,
       status,
-      book:books (
+      book:books!inner (
         id,
         title,
         author,
@@ -188,7 +188,7 @@ export async function getSecondhandStoreListings(storeId: string): Promise<Store
         pages,
         language
       ),
-      location:locations (
+      location:locations!inner (
         city,
         state
       )
@@ -201,7 +201,7 @@ export async function getSecondhandStoreListings(storeId: string): Promise<Store
     throw error;
   }
 
-  return (data ?? []) as StoreListing[];
+  return (data ?? []) as unknown as StoreListing[];
 }
 
 /**

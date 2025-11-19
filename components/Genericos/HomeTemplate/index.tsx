@@ -1,5 +1,5 @@
 import LivrariasMap, { Store } from '@/components/Genericos/Map/LivrariasMap';
-import { PadraoBookly, paletasCores } from '@/utils/colors';
+import { paletasCores } from '@/utils/colors';
 import { shadowStyles } from '@/utils/shadowStyles';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
