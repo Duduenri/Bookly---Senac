@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, ToastAndroid } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { listReviewsByBook, createBookReview, type ReviewItem } from '@/src/services/reviews';
-import { getMyProfile, createProfileForUser } from '@/src/services/friends';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { createProfileForUser, getMyProfile } from '@/src/services/friends';
+import { createBookReview, listReviewsByBook, type ReviewItem } from '@/src/services/reviews';
 import { paletasCores } from '@/utils/colors';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, FlatList, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from 'react-native';
 
 export default function ReviewScreen() {
   const router = useRouter();
@@ -144,19 +144,7 @@ export default function ReviewScreen() {
         <Text style={styles.title}>Avaliações do Livro</Text>
       </View>
 
-      {loading ? (
-        <Text style={styles.loading}>Carregando...</Text>
-      ) : (
-        <FlatList
-          data={reviews}
-          keyExtractor={(r) => r.id}
-          renderItem={renderItem}
-          ListEmptyComponent={<Text style={styles.empty}>Ainda não há avaliações.</Text>}
-          contentContainerStyle={{ padding: 16 }}
-          keyboardShouldPersistTaps="handled"
-        />
-      )}
-
+      {/* Formulário movido para cima */}
       <View style={styles.form}>
         <Text style={styles.formTitle}>Avalie este livro</Text>
         <View style={styles.ratingRow}>
@@ -186,6 +174,19 @@ export default function ReviewScreen() {
           <Text style={styles.submitText}>{submitting ? 'Enviando...' : 'Enviar Avaliação'}</Text>
         </TouchableOpacity>
       </View>
+
+      {loading ? (
+        <Text style={styles.loading}>Carregando...</Text>
+      ) : (
+        <FlatList
+          data={reviews}
+          keyExtractor={(r) => r.id}
+          renderItem={renderItem}
+          ListEmptyComponent={<Text style={styles.empty}>Ainda não há avaliações.</Text>}
+          contentContainerStyle={{ padding: 16 }}
+          keyboardShouldPersistTaps="handled"
+        />
+      )}
     </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
   date: { color: '#A0AEC0', marginLeft: 6 },
   stars: { color: '#E6B800', marginTop: 2, marginBottom: 6, fontSize: 16 },
   comment: { color: '#4A5568' },
-  form: { padding: 16, borderTopWidth: 1, borderTopColor: '#E2E8F0' },
+  form: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', backgroundColor: '#fafafa' },
   formTitle: { fontWeight: '700', color: '#2D3748', marginBottom: 8 },
   ratingRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   starPick: { fontSize: 28 },
