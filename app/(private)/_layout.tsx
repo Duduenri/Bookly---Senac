@@ -6,6 +6,8 @@ export default function PrivateLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="home" />
       <Stack.Screen name="profile" />
+      <Stack.Screen name="stores" />
+      <Stack.Screen name="store/[storeId]" />
     </Stack>
   );
 }

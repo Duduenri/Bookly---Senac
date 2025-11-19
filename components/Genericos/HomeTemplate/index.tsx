@@ -1,10 +1,14 @@
 import LivrariasMap, { Store } from '@/components/Genericos/Map/LivrariasMap';
 import { PadraoBookly, paletasCores } from '@/utils/colors';
+import { shadowStyles } from '@/utils/shadowStyles';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { Book, BookList } from '../BookList';
 import { Header } from '../Header';
+import { SearchBar } from '../SearchBar';
+import { CategoryGrid } from '../CategoryGrid';
+import { PromoBanner } from '../PromoBanner';
 
 export interface HomeTemplateProps {
   books: Book[];
@@ -16,6 +20,11 @@ export interface HomeTemplateProps {
   onAddBookPress?: () => void;
   onFriendsPress?: () => void;
   onReviewPress?: () => void;
+  onStorePress?: (storeId: string, storeType?: 'bookstore' | 'secondhand_store') => void;
+  onViewAllStoresPress?: () => void;
+  onCategoryPress?: (categoryId: string) => void;
+  onSearchPress?: () => void;
+  onPromoPress?: () => void;
   stores?: Store[];
   latestReviews?: {
     id: string;
@@ -39,11 +48,17 @@ export const HomeTemplate: React.FC<HomeTemplateProps> = ({
   onAddBookPress,
   onFriendsPress,
   onReviewPress,
+  onStorePress,
+  onViewAllStoresPress,
+  onCategoryPress,
+  onSearchPress,
+  onPromoPress,
   stores = [],
   latestReviews = [],
   avatarName,
   avatarSrc,
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
   return (
     <SafeAreaView style={styles.container}>
       {/* Header personalizado */}
@@ -51,111 +66,128 @@ export const HomeTemplate: React.FC<HomeTemplateProps> = ({
         avatarName={avatarName || 'Usuário'}
         avatarSrc={avatarSrc}
         title={avatarName || 'Bookly'}
-        subtitle="Descubra milhares de livros"
+        subtitle="Descubra novos livros"
         avatarSize="md"
         avatarColorPalette="blue"
-        showBorder={true}
+        showBorder={false}
         showShadow={false}
         onAvatarPress={onAvatarPress}
         onTitlePress={onTitlePress}
         rightContent={(
-          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
             <TouchableOpacity 
-              onPress={onAddBookPress} 
-              disabled={!onAddBookPress}
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 16,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 4,
-              }}
+              onPress={onFriendsPress} 
+              disabled={!onFriendsPress}
+              style={styles.headerIconButton}
             >
-              <Ionicons name="add" size={16} color="#fff" />
-              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>Livro</Text>
+              <Ionicons name="people-outline" size={22} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={onReviewPress} disabled={!onReviewPress}
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 16,
-              }}
+            <TouchableOpacity 
+              onPress={onReviewPress} 
+              disabled={!onReviewPress}
+              style={styles.headerIconButton}
             >
-              <Text style={{ color: '#fff', fontWeight: '600' }}>Avaliar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={onFriendsPress} disabled={!onFriendsPress}
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 16,
-              }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '600' }}>Amigos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={onTitlePress} disabled={!onTitlePress}>
-              <Text style={{ color: '#fff', fontWeight: '600' }}>Home</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={onAvatarPress} disabled={!onAvatarPress}>
-              <Text style={{ color: '#fff', fontWeight: '600' }}>Perfil</Text>
+              <Ionicons name="star-outline" size={22} color="#fff" />
             </TouchableOpacity>
           </View>
         )}
       />
 
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Barra de Pesquisa */}
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSearch={onSearchPress}
+          placeholder="Buscar livros, autores, livrarias..."
+        />
+
+        {/* Banner Promocional */}
+        <PromoBanner onPress={onPromoPress} />
+
+        {/* Grade de Categorias */}
+        <CategoryGrid onCategoryPress={onCategoryPress} />
+
       {/* Mapa de livrarias */}
       {stores.length > 0 && (
         <View style={styles.mapSection}>
-          <Text style={styles.mapTitle}>Sebos e Livrarias Próximas</Text>
-          <LivrariasMap stores={stores} height={220} />
-        </View>
-      )}
-
-      {/* Últimas avaliações */}
-      {latestReviews.length > 0 && (
-        <View style={styles.latestSection}>
-          <Text style={styles.latestTitle}>Últimas avaliações</Text>
-          <View style={{ gap: 10 }}>
-            {latestReviews.map((rev) => (
-              <View key={rev.id} style={styles.reviewItem}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.reviewBook} numberOfLines={1}>
-                    {rev.book?.title ?? 'Livro'}
-                  </Text>
-                  <Text style={styles.reviewMeta} numberOfLines={1}>
-                    {rev.profile?.name ?? 'Usuário'} • {new Date(rev.createdAt).toLocaleDateString()}
-                  </Text>
-                  {rev.comment ? (
-                    <Text style={styles.reviewComment} numberOfLines={2}>{rev.comment}</Text>
-                  ) : null}
-                </View>
-                <Text style={styles.reviewStars}>
-                  {'★'.repeat(Math.max(1, Math.min(5, rev.rating)))}
-                </Text>
-              </View>
-            ))}
+          <View style={styles.mapHeader}>
+            <Text style={styles.mapTitle}>Sebos e Livrarias Próximas</Text>
+            {onViewAllStoresPress && (
+              <TouchableOpacity onPress={onViewAllStoresPress}>
+                <Text style={styles.viewAllText}>Ver todas →</Text>
+              </TouchableOpacity>
+            )}
           </View>
+          <LivrariasMap stores={stores} height={220} onStorePress={onStorePress} />
         </View>
       )}
 
-      {/* Seção de título */}
-      <View style={styles.titleSection}>
-        <Text style={styles.mainTitle}>Livros Disponíveis</Text>
-        <Text style={styles.subtitle}>
-          {books.length} livro{books.length !== 1 ? 's' : ''} encontrado{books.length !== 1 ? 's' : ''}
-        </Text>
-      </View>
+        {/* Últimas avaliações */}
+        {latestReviews.length > 0 && (
+          <View style={styles.latestSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.latestTitle}>✨ Últimas Avaliações</Text>
+            </View>
+            <View style={styles.reviewsContainer}>
+              {latestReviews.slice(0, 3).map((rev) => (
+                <View key={rev.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <View style={styles.reviewUserInfo}>
+                      <View style={styles.avatarPlaceholder}>
+                        <Text style={styles.avatarText}>
+                          {(rev.profile?.name || 'U')[0].toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.reviewUserName}>
+                          {rev.profile?.name ?? 'Usuário'}
+                        </Text>
+                        <Text style={styles.reviewDate}>
+                          {new Date(rev.createdAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.reviewStars}>
+                      {'★'.repeat(Math.max(1, Math.min(5, rev.rating)))}
+                    </Text>
+                  </View>
+                  <Text style={styles.reviewBook} numberOfLines={1}>
+                    📖 {rev.book?.title ?? 'Livro'}
+                  </Text>
+                  {rev.comment && (
+                    <Text style={styles.reviewComment} numberOfLines={2}>
+                      {rev.comment}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
-      {/* Lista de livros */}
-      <BookList
-        books={books}
-        onBookPress={onBookPress}
-        onFavoritePress={onFavoritePress}
-        onWishlistPress={onWishlistPress}
-      />
+        {/* Seção de título dos livros */}
+        <View style={styles.booksSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.mainTitle}>📚 Para Você</Text>
+            <Text style={styles.booksCount}>
+              {books.length} livro{books.length !== 1 ? 's' : ''}
+            </Text>
+          </View>
+
+          {/* Lista de livros */}
+          <BookList
+            books={books}
+            onBookPress={onBookPress}
+            onFavoritePress={onFavoritePress}
+            onWishlistPress={onWishlistPress}
+          />
+        </View>
+      </ScrollView>
 
       {/* Botão flutuante para adicionar livro */}
       {onAddBookPress && (
@@ -165,6 +197,7 @@ export const HomeTemplate: React.FC<HomeTemplateProps> = ({
           activeOpacity={0.8}
         >
           <Ionicons name="add" size={28} color="#fff" />
+          <Text style={styles.floatingButtonText}>Anunciar</Text>
         </TouchableOpacity>
       )}
     </SafeAreaView>
@@ -174,80 +207,154 @@ export const HomeTemplate: React.FC<HomeTemplateProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: PadraoBookly.corSecundaria,
+    backgroundColor: '#f8f9fa',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  headerIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  booksSection: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  booksCount: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
   },
   mapSection: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 8,
-    backgroundColor: paletasCores.cinza.texto, // branco da paleta
-    borderBottomWidth: 1,
-    borderBottomColor: paletasCores.cinza.contorno,
-    gap: 8,
+    paddingBottom: 16,
+    backgroundColor: '#fff',
+    marginBottom: 8,
+  },
+  mapHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   mapTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: paletasCores.principal.solido,
   },
-  latestSection: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-    backgroundColor: paletasCores.cinza.texto,
-    borderBottomWidth: 1,
-    borderBottomColor: paletasCores.cinza.contorno,
-    gap: 8,
-  },
-  latestTitle: {
-    fontSize: 18,
+  viewAllText: {
+    fontSize: 14,
     fontWeight: '600',
     color: paletasCores.principal.solido,
   },
-  reviewItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  latestSection: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+    backgroundColor: '#fff',
+    marginBottom: 8,
+  },
+  latestTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: paletasCores.principal.solido,
+  },
+  reviewsContainer: {
     gap: 12,
   },
-  reviewBook: { fontWeight: '600', color: '#2D3748' },
-  reviewMeta: { color: '#718096', fontSize: 12 },
-  reviewComment: { color: '#4A5568', fontSize: 12 },
-  reviewStars: { color: '#E6B800', fontWeight: '700' },
-  titleSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: paletasCores.cinza.texto,
-    borderBottomWidth: 1,
-    borderBottomColor: paletasCores.cinza.contorno,
+  reviewCard: {
+    backgroundColor: '#f8f9fa',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reviewUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 10,
+  },
+  avatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: paletasCores.principal.solido,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  reviewUserName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  reviewDate: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 2,
+  },
+  reviewBook: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 6,
+  },
+  reviewComment: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 18,
+  },
+  reviewStars: {
+    fontSize: 18,
+    color: '#FFD700',
   },
   mainTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
     color: paletasCores.principal.solido,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: paletasCores.cinza.solido,
   },
   floatingButton: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 90,
     right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: paletasCores.principal.solido,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    backgroundColor: paletasCores.principal.solido,
+    ...shadowStyles.large,
+  },
+  floatingButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

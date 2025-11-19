@@ -4,6 +4,8 @@ import { useAuth } from '@/src/contexts/AuthContext';
 import { useApi } from '@/src/services/api';
 import { getBooksFromSupabase } from '@/src/services/books';
 import { listLatestReviews, type LatestReviewItem } from '@/src/services/reviews';
+import { listAllStores } from '@/src/services/storeService';
+import type { Store as MapStore } from '@/components/Genericos/Map/LivrariasMap';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -13,6 +15,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { addToFavorites, addToWishlist } = useApi();
   const [books, setBooks] = useState<Book[]>([]);
+  const [stores, setStores] = useState<MapStore[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -23,30 +26,6 @@ export default function HomeScreen() {
       Alert.alert('Erro', error);
     }
   }, [error]);
-
-  const stores = [
-    {
-      id: 's1',
-      name: 'Sebo Paulista',
-      latitude: -23.556580,
-      longitude: -46.662113,
-      address: 'Av. Paulista, São Paulo - SP',
-    },
-    {
-      id: 's2',
-      name: 'Livraria Cultura (Conjunto Nacional)',
-      latitude: -23.561684,
-      longitude: -46.655981,
-      address: 'Av. Paulista, 2073 - Bela Vista, São Paulo - SP',
-    },
-    {
-      id: 's3',
-      name: 'Blooks Livraria',
-      latitude: -22.972706,
-      longitude: -43.182365,
-      address: 'Botafogo, Rio de Janeiro - RJ',
-    },
-  ];
 
   useEffect(() => {
     let isMounted = true;
@@ -77,6 +56,39 @@ export default function HomeScreen() {
       if (active) setLatestReviews(data);
     })();
     return () => { active = false; };
+  }, []);
+
+  // Buscar lojas do banco de dados
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStores = async () => {
+      try {
+        const storesData = await listAllStores();
+        if (!isMounted) return;
+        
+        // Mapear as lojas para o formato do mapa
+        const mappedStores: MapStore[] = storesData
+          .filter(store => store.locations && store.locations.length > 0)
+          .flatMap(store => 
+            store.locations!.map(location => ({
+              id: store.id,
+              name: store.name,
+              latitude: location.latitude || 0,
+              longitude: location.longitude || 0,
+              address: location.address,
+              type: store.type,
+            }))
+          )
+          .filter(store => store.latitude !== 0 && store.longitude !== 0);
+        
+        setStores(mappedStores);
+      } catch (error) {
+        console.error('Erro ao carregar lojas:', error);
+      }
+    };
+
+    fetchStores();
+    return () => { isMounted = false; };
   }, []);
 
   const handleBookPress = useCallback((book: Book) => {
@@ -138,6 +150,20 @@ export default function HomeScreen() {
     router.push({ pathname: '/(private)/review/[bookId]', params: { bookId: book.id } });
   }, [router]);
 
+  const handleStorePress = useCallback((storeId: string, storeType?: 'bookstore' | 'secondhand_store') => {
+    router.push({
+      pathname: '/(private)/store/[storeId]',
+      params: {
+        storeId,
+        type: storeType || 'bookstore',
+      },
+    });
+  }, [router]);
+
+  const handleViewAllStoresPress = useCallback(() => {
+    router.push('/(private)/stores');
+  }, [router]);
+
   if (loading) {
     return (
       <>
@@ -152,6 +178,8 @@ export default function HomeScreen() {
           onAddBookPress={handleAddBookPress}
           onFriendsPress={handleFriendsPress}
           onReviewPress={handleReviewPress}
+          onStorePress={handleStorePress}
+          onViewAllStoresPress={handleViewAllStoresPress}
           avatarName={user?.name ?? undefined}
           avatarSrc={user?.avatar ?? undefined}
         />
@@ -211,6 +239,8 @@ export default function HomeScreen() {
         onAddBookPress={handleAddBookPress}
         onFriendsPress={handleFriendsPress}
         onReviewPress={handleReviewPress}
+        onStorePress={handleStorePress}
+        onViewAllStoresPress={handleViewAllStoresPress}
         latestReviews={latestReviews}
         avatarName={user?.name ?? undefined}
         avatarSrc={user?.avatar ?? undefined}

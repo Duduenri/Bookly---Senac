@@ -8,15 +8,17 @@ export type Store = {
   latitude: number;
   longitude: number;
   address?: string;
+  type?: 'bookstore' | 'secondhand_store';
 };
 
 type LivrariasMapProps = {
   stores: Store[];
   initialRegion?: Region;
   height?: number;
+  onStorePress?: (storeId: string, storeType?: 'bookstore' | 'secondhand_store') => void;
 };
 
-export default function LivrariasMap({ stores, initialRegion, height = 300 }: LivrariasMapProps) {
+export default function LivrariasMap({ stores, initialRegion, height = 300, onStorePress }: LivrariasMapProps) {
   const defaultRegion: Region =
     initialRegion || {
       latitude: stores[0]?.latitude || -31.7654, // Pelotas - RS
@@ -38,6 +40,7 @@ export default function LivrariasMap({ stores, initialRegion, height = 300 }: Li
             coordinate={{ latitude: s.latitude, longitude: s.longitude }}
             title={s.name}
             description={s.address}
+            onPress={() => onStorePress && onStorePress(s.id, s.type)}
           />
         ))}
       </MapView>

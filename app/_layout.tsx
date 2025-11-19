@@ -6,9 +6,33 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import 'react-native-reanimated';
+import { MD3LightTheme, PaperProvider } from 'react-native-paper';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
+import { paletasCores } from '@/utils/colors';
+
+// Tema customizado do React Native Paper com as cores do Bookly
+const booklyTheme = {
+  ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    primary: paletasCores.principal.solido, // #0d2f2c
+    primaryContainer: '#e8f5e9',
+    secondary: paletasCores.verde.solido,
+    secondaryContainer: '#e8f5e9',
+    surface: '#ffffff',
+    surfaceVariant: '#f5f5f5',
+    background: '#eeecda',
+    error: paletasCores.vermelho.solido,
+    onPrimary: '#ffffff',
+    onSecondary: '#ffffff',
+    onSurface: '#333333',
+    onSurfaceVariant: '#666666',
+    onError: '#ffffff',
+    outline: '#cccccc',
+  },
+};
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -84,14 +108,16 @@ export default function RootLayout() {
   }
 
   return (
-    <Provider>
-      <AuthProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <RootLayoutNav />
-          <StatusBar style="auto" />
-          <Toaster />
-        </ThemeProvider>
-      </AuthProvider>
-    </Provider>
+    <PaperProvider theme={booklyTheme}>
+      <Provider>
+        <AuthProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <RootLayoutNav />
+            <StatusBar style="auto" />
+            <Toaster />
+          </ThemeProvider>
+        </AuthProvider>
+      </Provider>
+    </PaperProvider>
   );
 }

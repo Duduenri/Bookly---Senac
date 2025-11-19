@@ -10,12 +10,14 @@ export type Store = {
   latitude: number;
   longitude: number;
   address?: string;
+  type?: 'bookstore' | 'secondhand_store';
 };
 
 export type LivrariasMapProps = {
   stores: Store[];
   initialRegion?: any;
   height?: number;
+  onStorePress?: (storeId: string, storeType?: 'bookstore' | 'secondhand_store') => void;
 };
 
 export default function LivrariasMap(props: LivrariasMapProps) {
